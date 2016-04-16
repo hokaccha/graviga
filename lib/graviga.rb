@@ -1,5 +1,5 @@
-require "graviga/version"
+require 'graphql/parser'
 
-module Graviga
-  # Your code goes here...
-end
+require 'graviga/version'
+require 'graviga/object_type'
+require 'graviga/schema'
