@@ -7,7 +7,7 @@ describe Graviga do
   end
 
   specify do
-    result = BlogSchema.execute('query name { post { id, title } }')
+    result = BlogSchema.execute('query name { articles { id, title } }')
     expect(result).to be_a Hash
     data = result['data']
     post = data['post']
