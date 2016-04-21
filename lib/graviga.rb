@@ -1,4 +1,4 @@
-require 'graphql/parser'
+require 'graphql'
 
 require 'graviga/version'
 require 'graviga/types/object_type'
