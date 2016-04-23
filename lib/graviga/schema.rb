@@ -6,15 +6,18 @@ module Graviga
     end
 
     module ModuleMethods
-      def execute(*)
-        {
-          'data' => {
-            'post' => {
-              'id' => '1',
-              'title' => 'foo',
-            },
-          },
-        }
+      def execute(query)
+        data = {}
+        type = self::Query.new
+        doc = GraphQL.parse(query)
+        doc.definitions.each do |part|
+          part.selections.each do |selection|
+            name = selection.name
+            data[selection.name.to_sym] = type.send(name)
+          end
+        end
+
+        { data: data }
       end
     end
   end
