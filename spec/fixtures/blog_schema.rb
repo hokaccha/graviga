@@ -1,20 +1,31 @@
 module BlogSchema
   include Graviga::Schema
 
-  class Query < ObjectType
+  class QueryType < ObjectType
     field :articles, [:article]
+    field :article, :article, args: { id: :int! }
+    # field :article, :article, {
+    #   description: 'foo',
+    #   args: {
+    #     id: { type: :int!, description: 'foo', default: 1 }
+    #   }
+    # }
+
+    def article(arguments)
+      Article.find(arguments[:id])
+    end
   end
 
-  class Mutation < ObjectType
+  class MutationType < ObjectType
   end
 
-  class User < ObjectType
+  class UserType < ObjectType
     field :id, :id!
     field :name, :string!
     field :activity, [:postable]
   end
 
-  class Article < ObjectType
+  class ArticleType < ObjectType
     implement :postable
 
     field :id, :id!
@@ -24,7 +35,7 @@ module BlogSchema
     field :status, :status!
   end
 
-  class Comment < ObjectType
+  class CommentType < ObjectType
     implement :postable
 
     field :id, :id!
@@ -32,16 +43,16 @@ module BlogSchema
     field :user, :user!
   end
 
-  class Postable < InterfaceType
+  class PostableType < InterfaceType
     field :id, :id!
     field :user, :user!
   end
 
-  class Status < EnumType
+  class StatusType < EnumType
     value :draft, 0, description: 'draft'
     value :published, 1, description: 'published'
   end
 
-  class ArticleInput < InputType
+  class ArticleInputType < InputType
   end
 end
