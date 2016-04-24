@@ -1,6 +1,8 @@
 require 'graphql'
 
 require 'graviga/version'
+require 'graviga/types/id_type'
+require 'graviga/types/string_type'
 require 'graviga/types/object_type'
 require 'graviga/types/interface_type'
 require 'graviga/types/enum_type'
