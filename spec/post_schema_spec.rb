@@ -4,7 +4,6 @@ require 'hashie'
 describe 'PostSchema' do
   module PostSchema
     include Graviga::Schema
-    binding.pry
 
     class QueryType < ObjectType
       field :post, :Post!

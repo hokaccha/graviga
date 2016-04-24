@@ -4,10 +4,10 @@ describe 'hello world' do
   module HelloWorldSchema
     include Graviga::Schema
 
-    class Query < ObjectType
-      field :hello, :string!
+    class QueryType < ObjectType
+      field :hello, :String!
 
-      def hello
+      def hello(_)
         'world'
       end
     end
