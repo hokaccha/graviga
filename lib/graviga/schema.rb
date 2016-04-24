@@ -17,6 +17,8 @@ module Graviga
         end
 
         { data: data }
+      rescue Graviga::ExecutionError => err
+        { data: nil, errors: [err] }
       end
 
       private
@@ -41,10 +43,16 @@ module Graviga
         type_klass = self.const_get("#{type_def}Type")
         type = type_klass.new
 
+        obj = nil
         if parent_type.respond_to?(name)
           obj = parent_type.send(name, parent_obj)
-        else
+        elsif parent_obj.respond_to?(name)
           obj = parent_obj.send(name)
+        end
+
+        if non_null && obj.nil?
+          parent_type_name = parent_type.class.class_name.sub(/Type$/, '')
+          raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}."
         end
 
         return obj if selection.selections.empty?
