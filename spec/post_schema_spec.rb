@@ -10,14 +10,14 @@ describe 'PostSchema' do
 
       def post(_)
         Hashie::Mash.new(
-          id: 1,
+          id: '1',
           title: 'foo',
           body: 'bar',
           tags: ['t1', 't2'],
           comments: [
-            { id: 1, text: 'a' },
-            { id: 2, text: 'b' },
-            { id: 3, text: 'c' },
+            { id: '1', text: 'a' },
+            { id: '2', text: 'b' },
+            { id: '3', text: 'c' },
           ]
         )
       end
@@ -60,13 +60,13 @@ describe 'PostSchema' do
     expect(result).to eq(
       data: {
         post: {
-          id: 1,
+          id: '1',
           title: 'foo',
           body: 'bar',
           tags: ['t1', 't2']  ,
           comments: [
-            { id: 1, text: 'a' },
-            { id: 2, text: 'b' },
+            { id: '1', text: 'a' },
+            { id: '2', text: 'b' },
           ]
         }
       }

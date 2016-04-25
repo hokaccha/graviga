@@ -55,9 +55,13 @@ module Graviga
           raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}."
         end
 
-        return obj if selection.selections.empty?
-
-        if is_array
+        if type.is_a? Graviga::Types::ScalarType
+          if is_array
+            obj.map { |o| type.serialize(o) }
+          else
+            type.serialize(obj)
+          end
+        elsif is_array
           obj.map do |o|
             selection.selections.map do |s|
               [s.name.to_sym, resolve(type, s, o)]

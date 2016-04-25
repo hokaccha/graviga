@@ -1,8 +1,12 @@
 require 'graphql'
 
 require 'graviga/version'
+require 'graviga/types/scalar_type'
 require 'graviga/types/id_type'
 require 'graviga/types/string_type'
+require 'graviga/types/int_type'
+require 'graviga/types/float_type'
+require 'graviga/types/boolean_type'
 require 'graviga/types/object_type'
 require 'graviga/types/interface_type'
 require 'graviga/types/enum_type'

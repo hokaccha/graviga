@@ -1,12 +1,12 @@
 module Graviga
   module Types
-    class IDType < ScalarType
+    class BooleanType < ScalarType
       def serialize(value)
-        value.to_s
+        !!value
       end
 
       def parse(value)
-        value.to_s
+        !!value
       end
     end
   end
