@@ -51,7 +51,7 @@ module Graviga
         end
 
         if non_null && obj.nil?
-          parent_type_name = parent_type.class.class_name.sub(/Type$/, '')
+          parent_type_name = parent_type.class.name.split("::").last.sub(/Type$/, '')
           raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}."
         end
 
