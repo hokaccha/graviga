@@ -8,7 +8,7 @@ describe 'PostSchema' do
     class QueryType < ObjectType
       field :post, :Post!
 
-      def post(_)
+      def post
         Hashie::Mash.new(
           id: '1',
           title: 'foo',
@@ -30,8 +30,8 @@ describe 'PostSchema' do
       field :tags, [:String]
       field :comments, [:Comment]
 
-      def comments(post)
-        post.comments.first(2)
+      def comments
+        source.comments.first(2)
       end
     end
 

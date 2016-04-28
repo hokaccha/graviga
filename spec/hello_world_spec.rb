@@ -7,7 +7,7 @@ describe 'hello world' do
     class QueryType < ObjectType
       field :hello, :String!
 
-      def hello(_)
+      def hello
         'world'
       end
     end

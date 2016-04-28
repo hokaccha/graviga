@@ -7,7 +7,7 @@ describe 'non null' do
       field :foo, :String!
       field :bar, :String!
 
-      def foo(_)
+      def foo
         nil
       end
     end

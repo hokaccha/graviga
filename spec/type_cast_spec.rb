@@ -11,23 +11,23 @@ describe 'type cast' do
       field :float, :Float
       field :bool, :Boolean
 
-      def id(_)
+      def id
         1
       end
 
-      def str(_)
+      def str
         2
       end
 
-      def int(_)
+      def int
         '1'
       end
 
-      def float(_)
+      def float
         '2.5'
       end
 
-      def bool(_)
+      def bool
         1
       end
     end

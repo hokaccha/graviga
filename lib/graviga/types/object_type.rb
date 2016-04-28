@@ -1,12 +1,11 @@
 module Graviga
   module Types
     class ObjectType
+      attr_reader :source
+
       def self.field(name, type)
         @fields ||= {}
         @fields[name] = { name: name, type: type }
-      end
-
-      def self.implement(*)
       end
 
       def field(name)

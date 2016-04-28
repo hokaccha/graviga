@@ -40,12 +40,10 @@ module Graviga
           type_def = type_def[0...-1].to_sym
         end
 
-        type_klass = self.const_get("#{type_def}Type")
-        type = type_klass.new
-
         obj = nil
         if parent_type.respond_to?(name)
-          obj = parent_type.send(name, parent_obj)
+          parent_type.instance_variable_set(:@source, parent_obj)
+          obj = parent_type.send(name)
         elsif parent_obj.respond_to?(name)
           obj = parent_obj.send(name)
         end
@@ -55,6 +53,8 @@ module Graviga
           raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}."
         end
 
+        type_klass = self.const_get("#{type_def}Type")
+        type = type_klass.new
         if type.is_a? Graviga::Types::ScalarType
           if is_array
             obj.map { |o| type.serialize(o) }
