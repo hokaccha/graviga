@@ -1,40 +1,44 @@
 require 'spec_helper'
 
 describe 'type cast' do
-  module TypeCastSchema
-    include Graviga::Schema
+  before do
+    module Sandbox
+      class QueryType < Graviga::Types::ObjectType
+        field :id, :ID
+        field :str, :String
+        field :int, :Int
+        field :float, :Float
+        field :bool, :Boolean
 
-    class QueryType < ObjectType
-      field :id, :ID
-      field :str, :String
-      field :int, :Int
-      field :float, :Float
-      field :bool, :Boolean
+        def id
+          1
+        end
 
-      def id
-        1
-      end
+        def str
+          2
+        end
 
-      def str
-        2
-      end
+        def int
+          '1'
+        end
 
-      def int
-        '1'
-      end
+        def float
+          '2.5'
+        end
 
-      def float
-        '2.5'
-      end
-
-      def bool
-        1
+        def bool
+          1
+        end
       end
     end
   end
 
+  after { Object.send(:remove_const, :Sandbox) }
+
+  let(:schema) { Graviga::Schema.new(query: :Query, namespace: Sandbox) }
+
   specify do
-    result = TypeCastSchema.execute('{ id, str, int, float, bool }')
+    result = schema.execute('{ id, str, int, float, bool }')
     data = result[:data]
     expect(data[:id]).to eq '1'
     expect(data[:str]).to eq '2'

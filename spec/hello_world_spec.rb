@@ -1,20 +1,21 @@
 require 'spec_helper'
 
 describe 'hello world' do
-  module HelloWorldSchema
-    include Graviga::Schema
-
-    class QueryType < ObjectType
-      field :hello, :String!
-
-      def hello
-        'world'
+  before do
+    module Sandbox
+      class QueryType < Graviga::Types::ObjectType
+        field :hello, :String!
+        def hello
+          'world'
+        end
       end
     end
   end
 
-  specify do
-    result = HelloWorldSchema.execute('{ hello }')
-    expect(result).to eq({ data: { hello: 'world' } })
-  end
+  after { Object.send(:remove_const, :Sandbox) }
+
+  let(:schema) { Graviga::Schema.new(query: :Query, namespace: Sandbox) }
+  let(:result) { schema.execute('{ hello }') }
+
+  it { expect(result).to eq({ data: { hello: 'world' } }) }
 end
