@@ -29,14 +29,21 @@ module Graviga
       type_def = field[:type]
       non_null = false
       is_array = false
-      if type_def.is_a? Array
-        is_array = true
-        type_def = type_def.first
-      end
+      non_null_item = false
 
-      if /!$/ === type_def
+      if type_def[-1] == '!'
         non_null = true
         type_def = type_def[0...-1].to_sym
+      end
+
+      if type_def[0] == '[' && type_def[-1] == ']'
+        is_array = true
+        type_def = type_def[1...-1]
+
+        if type_def[-1] == '!'
+          non_null_item = true
+          type_def = type_def[0...-1].to_sym
+        end
       end
 
       obj = nil
@@ -47,25 +54,37 @@ module Graviga
         obj = parent_obj.send(name)
       end
 
-      if non_null && obj.nil?
-        parent_type_name = parent_type.class.name.split("::").last.sub(/Type$/, '')
-        raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}."
+      if obj.nil?
+        if non_null
+          parent_type_name = parent_type.class.name.split("::").last
+          raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}"
+        else
+          return nil
+        end
       end
 
       type_klass = get_type_class(type_def)
       type = type_klass.new
+
+      if is_array
+        return obj.map do |o|
+          if o.nil? && non_null_item
+            parent_type_name = parent_type.class.name.split("::").last
+            raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}"
+          end
+
+          if type.is_a? Graviga::Types::ScalarType
+            type.serialize(o)
+          else
+            selection.selections.map do |s|
+              [s.name.to_sym, resolve(type, s, o)]
+            end.to_h
+          end
+        end
+      end
+
       if type.is_a? Graviga::Types::ScalarType
-        if is_array
-          obj.map { |o| type.serialize(o) }
-        else
-          type.serialize(obj)
-        end
-      elsif is_array
-        obj.map do |o|
-          selection.selections.map do |s|
-            [s.name.to_sym, resolve(type, s, o)]
-          end.to_h
-        end
+        type.serialize(obj)
       elsif type.is_a? Graviga::Types::ObjectType
         selection.selections.map do |s|
           [s.name.to_sym, resolve(type, s, obj)]

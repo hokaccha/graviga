@@ -26,8 +26,8 @@ describe 'PostSchema' do
         field :id, :ID!
         field :title, :String!
         field :body, :String!
-        field :tags, [:String]
-        field :comments, [:Comment]
+        field :tags, :'[String]'
+        field :comments, :'[Comment]'
 
         def comments
           source.comments.first(2)
