@@ -27,6 +27,7 @@ module Graviga
       field = parent_type.field(name)
 
       type_def = field[:type]
+      args_def = field[:options][:args]
       non_null = false
       is_array = false
       non_null_item = false
@@ -49,7 +50,12 @@ module Graviga
       obj = nil
       if parent_type.respond_to?(name)
         parent_type.instance_variable_set(:@source, parent_obj)
-        obj = parent_type.send(name)
+        if args_def
+          args = get_args(name, selection.arguments, args_def)
+          obj = parent_type.send(name, args)
+        else
+          obj = parent_type.send(name)
+        end
       elsif parent_obj.respond_to?(name)
         obj = parent_obj.send(name)
       end
@@ -100,6 +106,30 @@ module Graviga
       else
         @namespace.const_get("#{name}Type")
       end
+    end
+
+    def get_args(field_name, arguments, args_def)
+      arguments.map do |s|
+        key = s.name.to_sym
+        val = s.value
+        type_def = args_def[key]
+        non_null = false
+        if type_def[-1] == '!'
+          non_null = true
+          type_def = type_def[0...-1].to_sym
+        end
+
+        if non_null && val.nil?
+          raise Graviga::ExecutionError,
+            "Field \"#{field_name}\" argument \"#{key}\" of type \"#{type_def}!\" is required but not provided."
+        end
+
+        type_klass = get_type_class(type_def)
+        type = type_klass.new
+        val = type.parse(val)
+
+        [key, val]
+      end.to_h
     end
   end
 end
