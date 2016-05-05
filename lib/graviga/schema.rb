@@ -109,26 +109,55 @@ module Graviga
     end
 
     def get_args(field_name, arguments, args_def)
-      arguments.map do |s|
-        key = s.name.to_sym
-        val = s.value
-        type_def = args_def[key]
+      args = arguments.map do |s|
+        [s.name.to_sym, s.value]
+      end.to_h
+
+      args_def.map do |name, type_def|
+        val = args[name]
+
         non_null = false
+        is_array = false
+        non_null_item = false
+
         if type_def[-1] == '!'
           non_null = true
           type_def = type_def[0...-1].to_sym
         end
 
+        if type_def[0] == '[' && type_def[-1] == ']'
+          is_array = true
+          type_def = type_def[1...-1]
+
+          if type_def[-1] == '!'
+            non_null_item = true
+            type_def = type_def[0...-1].to_sym
+          end
+        end
+
         if non_null && val.nil?
           raise Graviga::ExecutionError,
-            "Field \"#{field_name}\" argument \"#{key}\" of type \"#{type_def}!\" is required but not provided."
+            "Field \"#{field_name}\" argument \"#{name}\" of type \"#{type_def}!\" is required but not provided."
         end
 
         type_klass = get_type_class(type_def)
         type = type_klass.new
-        val = type.parse(val)
 
-        [key, val]
+        if is_array
+          val = val.map do |v|
+            if type.is_a? Graviga::Types::ScalarType
+              type.parse(v)
+            elsif type.is_a? Graviga::Types::InputObjectType
+              get_args(name, v.arguments, type.to_h)
+            end
+          end
+        elsif type.is_a? Graviga::Types::ScalarType
+          val = type.parse(val)
+        elsif type.is_a? Graviga::Types::InputObjectType
+          val = get_args(name, val.arguments, type.to_h)
+        end
+
+        [name, val]
       end.to_h
     end
   end
