@@ -5,7 +5,8 @@ module Graviga
       @namespace = namespace
     end
 
-    def execute(query)
+    def execute(query, variables: nil)
+      @variables = variables
       data = {}
       type = get_type_class(@query).new
       doc = GraphQL.parse(query)
@@ -115,6 +116,10 @@ module Graviga
 
       args_def.map do |name, type_def|
         val = args[name]
+
+        if val.is_a? GraphQL::Language::Nodes::VariableIdentifier
+          val = @variables[val.name.to_sym]
+        end
 
         non_null = false
         is_array = false
