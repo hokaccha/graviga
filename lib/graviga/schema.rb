@@ -1,21 +1,37 @@
 module Graviga
   class Schema
-    def initialize(query:, namespace: Object)
+    def initialize(query: :Query, mutation: :Mutation, namespace: Object)
       @query = query
+      @mutation = mutation
       @namespace = namespace
     end
 
-    def execute(query, variables: nil, context: nil)
+    def execute(query, variables: nil, context: nil, operation: nil)
       @variables = variables
       @context = context
+      @operation = operation
+
+      doc = GraphQL.parse(query)
+
+      if @operation
+        operation = doc.definitions.find do |operation_def|
+          operation_def.name == @operation
+        end
+        unless operation
+          raise Graviga::ExecutionError, "Unknown operation named \"#{@operation}\"."
+        end
+      elsif doc.definitions.size == 1
+        operation = doc.definitions.first
+      else
+        raise Graviga::ExecutionError, 'Must provide operation name if query contains multiple operations.'
+      end
+
+      operation_name = operation_name_from(operation.operation_type)
+      operation_type = get_type_class(operation_name).new
 
       data = {}
-      type = get_type_class(@query).new
-      doc = GraphQL.parse(query)
-      doc.definitions.each do |part|
-        part.selections.each do |selection|
-          data[selection.name.to_sym] = resolve(type, selection)
-        end
+      operation.selections.each do |selection|
+        data[selection.name.to_sym] = resolve(operation_type, selection)
       end
 
       { data: data }
@@ -24,6 +40,13 @@ module Graviga
     end
 
     private
+
+    def operation_name_from(type_name)
+      case type_name
+      when 'query'    then @query
+      when 'mutation' then @mutation
+      end
+    end
 
     def resolve(parent_type, selection, parent_obj = nil)
       name = selection.name
