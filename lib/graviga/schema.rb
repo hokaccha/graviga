@@ -31,7 +31,7 @@ module Graviga
 
       data = {}
       operation.selections.each do |selection|
-        data[selection.name.to_sym] = resolve(operation_type, selection)
+        data[(selection.alias || selection.name).to_sym] = resolve(operation_type, selection)
       end
 
       { data: data }
@@ -110,7 +110,7 @@ module Graviga
             type.serialize(o)
           else
             selection.selections.map do |s|
-              [s.name.to_sym, resolve(type, s, o)]
+              [(s.alias || s.name).to_sym, resolve(type, s, o)]
             end.to_h
           end
         end
@@ -120,7 +120,7 @@ module Graviga
         type.serialize(obj)
       elsif type.is_a? Graviga::Types::ObjectType
         selection.selections.map do |s|
-          [s.name.to_sym, resolve(type, s, obj)]
+          [(s.alias || s.name).to_sym, resolve(type, s, obj)]
         end.to_h
       else
         raise Graviga::ExecutionError, "#{type_def} is invalid type"
