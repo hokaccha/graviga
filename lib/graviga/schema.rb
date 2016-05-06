@@ -5,8 +5,10 @@ module Graviga
       @namespace = namespace
     end
 
-    def execute(query, variables: nil)
+    def execute(query, variables: nil, context: nil)
       @variables = variables
+      @context = context
+
       data = {}
       type = get_type_class(@query).new
       doc = GraphQL.parse(query)
@@ -51,6 +53,7 @@ module Graviga
       obj = nil
       if parent_type.respond_to?(name)
         parent_type.instance_variable_set(:@source, parent_obj)
+        parent_type.instance_variable_set(:@context, @context)
         if args_def
           args = get_args(name, selection.arguments, args_def)
           obj = parent_type.send(name, args)

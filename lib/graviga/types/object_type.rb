@@ -2,6 +2,7 @@ module Graviga
   module Types
     class ObjectType
       attr_reader :source
+      attr_reader :context
 
       def self.field(name, type, options = {})
         @fields ||= {}
