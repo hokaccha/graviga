@@ -31,6 +31,7 @@ module Graviga
 
       data = {}
       operation.selections.each do |selection|
+        next if skip_field?(selection)
         data[(selection.alias || selection.name).to_sym] = resolve(operation_type, selection)
       end
 
@@ -79,12 +80,12 @@ module Graviga
         parent_type.instance_variable_set(:@context, @context)
         if args_def
           args = get_args(name, selection.arguments, args_def)
-          obj = parent_type.send(name, args)
+          obj = parent_type.public_send(name, args)
         else
-          obj = parent_type.send(name)
+          obj = parent_type.public_send(name)
         end
       elsif parent_obj.respond_to?(name)
-        obj = parent_obj.send(name)
+        obj = parent_obj.public_send(name)
       end
 
       if obj.nil?
@@ -110,8 +111,9 @@ module Graviga
             type.serialize(o)
           else
             selection.selections.map do |s|
+              next if skip_field?(s)
               [(s.alias || s.name).to_sym, resolve(type, s, o)]
-            end.to_h
+            end.compact.to_h
           end
         end
       end
@@ -120,8 +122,9 @@ module Graviga
         type.serialize(obj)
       elsif type.is_a? Graviga::Types::ObjectType
         selection.selections.map do |s|
+          next if skip_field?(s)
           [(s.alias || s.name).to_sym, resolve(type, s, obj)]
-        end.to_h
+        end.compact.to_h
       else
         raise Graviga::ExecutionError, "#{type_def} is invalid type"
       end
@@ -190,6 +193,27 @@ module Graviga
 
         [name, val]
       end.to_h
+    end
+
+    def skip_field?(selection)
+      return false if selection.directives.nil? || selection.directives.empty?
+
+      directive = selection.directives.first
+      if_value = directive.arguments.find { |a| a.name == 'if' }.value
+
+      if if_value.is_a? GraphQL::Language::Nodes::VariableIdentifier
+        if_value = @variables[if_value.name.to_sym]
+      end
+
+      if directive.name == 'skip' && if_value
+        return true
+      end
+
+      if directive.name == 'include' && !if_value
+        return true
+      end
+
+      return false
     end
   end
 end
