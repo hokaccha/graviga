@@ -13,15 +13,23 @@ module Graviga
 
       doc = GraphQL.parse(query)
 
+      operations = doc.definitions.select do |d|
+        d.is_a? GraphQL::Language::Nodes::OperationDefinition
+      end
+
+      @fragments = doc.definitions.select do |d|
+        d.is_a? GraphQL::Language::Nodes::FragmentDefinition
+      end
+
       if @operation
-        operation = doc.definitions.find do |operation_def|
+        operation = operations.find do |operation_def|
           operation_def.name == @operation
         end
         unless operation
           raise Graviga::ExecutionError, "Unknown operation named \"#{@operation}\"."
         end
-      elsif doc.definitions.size == 1
-        operation = doc.definitions.first
+      elsif operations.size == 1
+        operation = operations.first
       else
         raise Graviga::ExecutionError, 'Must provide operation name if query contains multiple operations.'
       end
@@ -30,8 +38,7 @@ module Graviga
       operation_type = get_type_class(operation_name).new
 
       data = {}
-      operation.selections.each do |selection|
-        next if skip_field?(selection)
+      extract_selections(operation.selections).each do |selection|
         data[(selection.alias || selection.name).to_sym] = resolve(operation_type, selection)
       end
 
@@ -41,6 +48,20 @@ module Graviga
     end
 
     private
+
+    def extract_selections(selections)
+      selections.flat_map do |selection|
+        next [] if skip_field?(selection)
+        if selection.is_a? GraphQL::Language::Nodes::FragmentSpread
+          fragment = @fragments.find { |f| f.name == selection.name }
+          extract_selections(fragment.selections)
+        elsif selection.is_a? GraphQL::Language::Nodes::InlineFragment
+          extract_selections(selection.selections)
+        else
+          selection
+        end
+      end
+    end
 
     def operation_name_from(type_name)
       case type_name
@@ -110,8 +131,7 @@ module Graviga
           if type.is_a? Graviga::Types::ScalarType
             type.serialize(o)
           else
-            selection.selections.map do |s|
-              next if skip_field?(s)
+            extract_selections(selection.selections).map do |s|
               [(s.alias || s.name).to_sym, resolve(type, s, o)]
             end.compact.to_h
           end
@@ -121,8 +141,7 @@ module Graviga
       if type.is_a? Graviga::Types::ScalarType
         type.serialize(obj)
       elsif type.is_a? Graviga::Types::ObjectType
-        selection.selections.map do |s|
-          next if skip_field?(s)
+        extract_selections(selection.selections).map do |s|
           [(s.alias || s.name).to_sym, resolve(type, s, obj)]
         end.compact.to_h
       else
