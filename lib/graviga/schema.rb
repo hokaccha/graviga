@@ -128,7 +128,7 @@ module Graviga
             raise Graviga::ExecutionError, "Cannot return null for non-nullable field #{parent_type_name}.#{name}"
           end
 
-          if type.is_a? Graviga::Types::ScalarType
+          if type.is_a?(Graviga::Types::ScalarType) || type.is_a?(Graviga::Types::EnumType)
             type.serialize(o)
           else
             extract_selections(selection.selections).map do |s|
@@ -138,7 +138,7 @@ module Graviga
         end
       end
 
-      if type.is_a? Graviga::Types::ScalarType
+      if type.is_a?(Graviga::Types::ScalarType) || type.is_a?(Graviga::Types::EnumType)
         type.serialize(obj)
       elsif type.is_a? Graviga::Types::ObjectType
         extract_selections(selection.selections).map do |s|
@@ -188,9 +188,13 @@ module Graviga
           end
         end
 
-        if non_null && val.nil?
-          raise Graviga::ExecutionError,
-            "Field \"#{field_name}\" argument \"#{name}\" of type \"#{type_def}!\" is required but not provided."
+        if val.nil?
+          if non_null
+            raise Graviga::ExecutionError,
+              "Field \"#{field_name}\" argument \"#{name}\" of type \"#{type_def}!\" is required but not provided."
+          else
+            next [name, nil]
+          end
         end
 
         type_klass = get_type_class(type_def)
@@ -200,10 +204,14 @@ module Graviga
           val = val.map do |v|
             if type.is_a? Graviga::Types::ScalarType
               type.parse(v)
+            elsif type.is_a? Graviga::Types::EnumType
+              v.is_a?(GraphQL::Language::Nodes::Enum) ? type.parse(v.name) : type.parse(v)
             elsif type.is_a? Graviga::Types::InputObjectType
               get_args(name, v.arguments, type.to_h)
             end
           end
+        elsif type.is_a? Graviga::Types::EnumType
+          val = val.is_a?(GraphQL::Language::Nodes::Enum) ? type.parse(val.name) : type.parse(val)
         elsif type.is_a? Graviga::Types::ScalarType
           val = type.parse(val)
         elsif type.is_a? Graviga::Types::InputObjectType
