@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'hashie'
 
-describe 'PostSchema' do
+describe 'resolve' do
   before do
     module Sandbox
       class QueryType < Graviga::Types::ObjectType
