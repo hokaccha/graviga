@@ -49,13 +49,15 @@ module Graviga
 
     private
 
-    def extract_selections(selections)
+    def extract_selections(selections, type = nil)
       selections.flat_map do |selection|
         next [] if skip_field?(selection)
         if selection.is_a? GraphQL::Language::Nodes::FragmentSpread
           fragment = @fragments.find { |f| f.name == selection.name }
+          next [] if type && type.class.name.split("::").last.to_s != "#{fragment.type.to_s}Type"
           extract_selections(fragment.selections)
         elsif selection.is_a? GraphQL::Language::Nodes::InlineFragment
+          next [] if type && type.class.name.split("::").last.to_s != "#{selection.type.to_s}Type"
           extract_selections(selection.selections)
         else
           selection
@@ -119,6 +121,9 @@ module Graviga
       end
 
       type_klass = get_type_class(type_def)
+      if type_klass < Graviga::Types::UnionType
+        type_klass = get_type_class(type_klass.new.resolve_type(obj))
+      end
       type = type_klass.new
 
       if is_array
@@ -131,7 +136,7 @@ module Graviga
           if type.is_a?(Graviga::Types::ScalarType) || type.is_a?(Graviga::Types::EnumType)
             type.serialize(o)
           else
-            extract_selections(selection.selections).map do |s|
+            extract_selections(selection.selections, type).map do |s|
               [(s.alias || s.name).to_sym, resolve(type, s, o)]
             end.compact.to_h
           end
@@ -141,7 +146,7 @@ module Graviga
       if type.is_a?(Graviga::Types::ScalarType) || type.is_a?(Graviga::Types::EnumType)
         type.serialize(obj)
       elsif type.is_a? Graviga::Types::ObjectType
-        extract_selections(selection.selections).map do |s|
+        extract_selections(selection.selections, type).map do |s|
           [(s.alias || s.name).to_sym, resolve(type, s, obj)]
         end.compact.to_h
       else
