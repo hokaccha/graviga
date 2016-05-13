@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'hashie'
 
 describe 'union' do
   before do
@@ -8,7 +7,7 @@ describe 'union' do
         field :x, :FooOrBar
 
         def x
-          Hashie::Mash.new(type: :Foo)
+          { type: :Foo }
         end
       end
 
@@ -16,7 +15,7 @@ describe 'union' do
         types :Foo, :Bar
 
         def resolve_type(value)
-          value.type
+          value[:type]
         end
       end
 
@@ -71,7 +70,7 @@ describe 'union' do
     end
     before do
       allow_any_instance_of(Sandbox::QueryType)
-        .to receive(:x).and_return(Hashie::Mash.new(type: :Bar))
+        .to receive(:x).and_return(type: :Bar)
     end
 
     it { should eq({ data: { x: { y: 'bar-y' } } }) }
