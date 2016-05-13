@@ -9,6 +9,11 @@ module Graviga
         @fields[name] = { name: name, type: type, options: options }
       end
 
+      def self.implement(*interfaces)
+        @interfaces ||= []
+        @interfaces += interfaces
+      end
+
       def field(name)
         self.class.instance_variable_get(:@fields)[name.to_sym]
       end

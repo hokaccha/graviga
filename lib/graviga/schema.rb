@@ -121,7 +121,7 @@ module Graviga
       end
 
       type_klass = get_type_class(type_def)
-      if type_klass < Graviga::Types::UnionType
+      if type_klass < Graviga::Types::UnionType || type_klass < Graviga::Types::InterfaceType
         type_klass = get_type_class(type_klass.new.resolve_type(obj))
       end
       type = type_klass.new
