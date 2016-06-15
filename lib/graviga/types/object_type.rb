@@ -9,6 +9,10 @@ module Graviga
         @fields[name] = { name: name, type: type, options: options }
       end
 
+      def self.fields
+        @fields
+      end
+
       def self.implement(*interfaces)
         @interfaces ||= []
         @interfaces += interfaces
